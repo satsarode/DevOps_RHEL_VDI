@@ -1,0 +1,53 @@
+---
+- name: 'Deploy /etc/vmware/config'
+template:
+src: templates/horizon/horizon_config.conf.j2
+dest: /etc/vmware/config
+owner: root
+group: root
+mode: 0644- name: 'Deploy /etc/vmware/viewagent-custom.conf'
+template:
+src: templates/horizon/horizon_viewagent.conf.j2
+dest: /etc/vmware/viewagent-custom.conf
+owner: root
+group: root
+mode: 0644- name: 'Ensure Horizon Agent is started'
+systemd:
+name: viewagent
+state: restarted
+enabled: yes- name: 'Horizon Agent cleanup'
+file:
+path: /home/{{ ssh_user }}/{{ vmware_horizon_agent }}
+state: absent- name: 'Lock and set login shell for vmwblast'
+user:
+name: vmwblast
+shell: /sbin/nologin
+password_lock: yes- name: 'Set CIS friendly permissions on /var/vmware'
+file:
+path: /var/vmware
+state: directory
+owner: root
+group: root
+mode: '1775'- name: 'Install iptool for horizon agent fixit script'
+copy:
+src: files/horizon/iptool.py
+dest: /usr/local/bin
+owner: root
+group: root
+mode: 0555- name: 'Install horizon fixit script'
+copy:
+src: files/horizon/horizon-agent-fixes.sh
+dest: /usr/local/bin
+mode: 0555
+owner: root
+group: root- name: 'Install horizon agent fixit service'
+copy:
+src: files/horizon/horizon-agent-fixes.service
+dest: /lib/systemd/system
+mode: 0644
+owner: root
+group: root- name: 'Enable horizon agent fixit service'
+systemd:
+name: horizon-agent-fixes.service
+daemon_reload: yes
+enabled: yes 
